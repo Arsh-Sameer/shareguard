@@ -1,36 +1,52 @@
-# ShareGuard – Secure Multi-Party Data Analytics Using Secret Sharing
+# ShareGuard
 
-Several organisations (e.g. hospitals) compute joint statistics – count, sum, mean, variance –
-without revealing their raw data. Each party splits its local totals into random shares and
-sends one share to each computing node; nodes add shares and only the final result is reconstructed.
+Secure multi-party analytics using secret sharing. This is a mini project for CSDX540 Secure Data Science.
 
-## Features
-- Additive (n-of-n) and Shamir (t-of-n) secret sharing over GF(2^61 - 1)
-- Secure count / sum / mean / variance / std-dev, verified against plaintext
-- Node-failure tolerance (Shamir): works with any t online nodes
-- HMAC-SHA256 tag on every share -> tampering is detected
-- Statistical proof that a single share is uniformly random (chi-square)
-- SHA-256 integrity check + Fernet encryption of the exported results
+## What it does
 
-## Run
-```bash
-pip install -r requirements.txt
-streamlit run app.py          # opens http://localhost:8501
-python tests.py               # 14 automated tests, writes output/test_results.json
+Imagine five hospitals that want the average cholesterol across all their patients, but none of them is allowed to hand over its records. ShareGuard handles that.
+
+Each hospital works out three totals from its own data: the number of records, the sum, and the sum of squares. It then splits each total into random pieces called shares and gives one share to each computing node. A single share is just a random number and tells you nothing. The nodes add up the shares they received, and only the combined totals are put back together. From those you get the count, sum, mean, variance and standard deviation, and the answer matches a normal calculation exactly.
+
+## Main features
+
+- Additive sharing (all nodes needed) and Shamir sharing (any t of n nodes), both over the prime field 2^61 minus 1
+- Exact results, checked against a plain calculation on the same data
+- With Shamir, the result still works if some nodes are offline
+- Every share carries an HMAC-SHA256 tag, so a changed share gets rejected
+- A chi-square test showing that one share looks uniformly random
+- SHA-256 hash and Fernet encryption for the exported results
+
+## How to run it
+
+You need Python 3.9 or newer.
+
 ```
-Click **Use sample dataset** in *Upload & Configure* (5 hospitals, 1010 synthetic patients),
-or upload any CSV that has one categorical "party" column and a numeric column.
+pip install -r requirements.txt
+streamlit run app.py
+```
+
+The app opens at http://localhost:8501. Click "Use sample dataset" on the Upload & Configure page, pick `hospital` as the party column and a numeric column such as `age`, then move through the pages in the sidebar. You can also upload your own CSV, as long as it has one column that identifies the party and one numeric column.
+
+To run the tests:
+
+```
+python tests.py
+```
+
+If `pip` or `streamlit` is blocked on your machine, use `python -m pip` and `python -m streamlit` instead.
 
 ## Files
-| File | Purpose |
-|---|---|
-| app.py | Streamlit user interface (6 modules) |
-| secret_sharing.py | Additive & Shamir sharing, fixed-point encoding |
-| analytics.py | Secure aggregation protocol and security experiments |
-| security.py | HMAC tags, SHA-256, Fernet encryption |
-| tests.py | Automated tests and experiment runner |
-| data/sample_dataset.csv | Synthetic multi-hospital dataset |
 
-## Note
-Educational prototype. Computing nodes are simulated inside one Python process; it is not a
-certified or networked MPC system. The sample data is synthetic.
+| File | What it does |
+|---|---|
+| app.py | The Streamlit interface |
+| secret_sharing.py | Additive and Shamir sharing, plus fixed-point encoding |
+| analytics.py | The secure aggregation steps and the security experiments |
+| security.py | HMAC tags, SHA-256 and Fernet encryption |
+| tests.py | 14 automated checks |
+| data/sample_dataset.csv | Made-up patient data from 5 hospitals |
+
+## Limits
+
+This is a learning project. The nodes are simulated inside one Python process, so there is no real network between them. It only handles simple statistics, it assumes the parties enter honest data, and it is not a certified security system. The sample data is synthetic.
